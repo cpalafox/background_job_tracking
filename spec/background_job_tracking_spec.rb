@@ -171,7 +171,7 @@ describe 'background job tracking' do
 
       context 'destroy_jobs_created_by_method_name' do
         it 'should destroy the jobs if it finds any' do
-          jobs = [ double('delayed_job', '[]' => 1) ]
+          jobs = [ double('delayed_job', id: 1) ]
           method_name = :schedule_ninety_horses
           expect(@object_with_jobs).to receive(:get_jobs_created_by_method_name).with(method_name).and_return(jobs)
           expect(@object_with_jobs.class.background_job_class).to receive(:destroy).with([1])
@@ -202,7 +202,7 @@ describe 'background job tracking' do
 
       context 'destroy_delayed_job_trackings_created_by_method_name' do
         it 'should destroy those trackings if they exist' do
-          trackings = [ double('trackings', '[]' => 1) ]
+          trackings = [ double('trackings', id: 1) ]
           allow(@object_with_jobs).to receive(:get_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing).and_return(trackings)
           expect(DelayedJobTracking).to receive(:destroy).with([1])
 

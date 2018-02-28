@@ -100,7 +100,7 @@ module BackgroundJobTracking
     end
 
     def destroy_jobs_created_by_method_name(method_name)
-      jobs = get_jobs_created_by_method_name(method_name).pluck(:id)
+      jobs = get_jobs_created_by_method_name(method_name).map(&:id)
       self.class.background_job_class.destroy(jobs) unless jobs.empty?
     end
 
@@ -109,7 +109,7 @@ module BackgroundJobTracking
     end
 
     def destroy_delayed_job_trackings_created_by_method_name(method_name)
-      trackings = get_delayed_job_trackings_created_by_method_name(method_name).pluck(:id)
+      trackings = get_delayed_job_trackings_created_by_method_name(method_name).map(&:id)
       DelayedJobTracking.destroy(trackings) unless trackings.empty?
     end
 
