@@ -10,7 +10,7 @@ Assumes that you're using Delayed Job and ActiveRecord.
 
 Add this line to your application's Gemfile:
 
-    gem 'background_job_tracking', :git => 'git://github.com/natlownes/background_job_tracking.git', :ref => 'master'
+    gem 'background_job_tracking', git: 'git://github.com/cpalafox/background_job_tracking.git'
 
 And then execute:
 
@@ -42,9 +42,9 @@ are no longer valid; you'll want them to go out on the updated date of the objec
       # this sets up the associations
       has_background_job_tracking
 
-      background_job_tracking :on => :after_create,
-        :method_name => :schedule_long_running_thing,
-        :update_if   => Proc.new {|bjt| bjt.needs_updated? }
+      background_job_tracking on: :after_create,
+        method_name: :schedule_long_running_thing,
+        update_if: Proc.new {|bjt| bjt.needs_updated? }
       #
       # this says:
       # after create, run the :schedule_long_running_thing

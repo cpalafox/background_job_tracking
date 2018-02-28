@@ -18,18 +18,19 @@ describe 'background job tracking' do
     after :each do
       Object.send(:remove_const, :BackgroundJobTest)
     end
+
     it 'should have many delayed job trackings' do
-      BackgroundJobTest.reflections[:delayed_job_trackings].should_not be_nil
-      BackgroundJobTest.reflections[:delayed_job_trackings].macro.should == :has_many
+      expect(BackgroundJobTest.reflections["delayed_job_trackings"]).not_to be_nil
+      expect(BackgroundJobTest.reflections["delayed_job_trackings"].macro).to eq :has_many
 
     end
     it 'should have many delayed jobs through trackings' do
-      BackgroundJobTest.reflections[:delayed_jobs].should_not be_nil
-      BackgroundJobTest.reflections[:delayed_jobs].options[:through].should == :delayed_job_trackings
+      expect(BackgroundJobTest.reflections["delayed_jobs"]).not_to be_nil
+      expect(BackgroundJobTest.reflections["delayed_jobs"].options[:through]).to eq :delayed_job_trackings
     end
 
     it 'should default to ::Delayed::Job as the class' do
-      BackgroundJobTest.reflections[:delayed_jobs].options[:class_name].should == '::Delayed::Job'
+      expect(BackgroundJobTest.reflections["delayed_jobs"].options[:class_name]).to eq '::Delayed::Job'
     end
   end
 
@@ -40,9 +41,9 @@ describe 'background job tracking' do
         
         has_background_job_tracking
 
-        background_job_tracking :on => :after_create,
-          :method_name => :schedule_long_running_thing,
-          :update_if   => Proc.new {|bjt| bjt.needs_updated? }
+        background_job_tracking on: :after_create,
+          method_name: :schedule_long_running_thing,
+          update_if: Proc.new {|bjt| bjt.needs_updated? }
 
         def schedule_long_running_thing
           ::Delayed::Job.new # example:  self.delay(:run_at => Date.tomorrow).do_some_long_running_thing
@@ -64,11 +65,11 @@ describe 'background job tracking' do
       end
 
       it 'should create a method for the job creation callback to call' do
-        @object_with_jobs.should respond_to :background_job_creation_tracking_callback_for_schedule_long_running_thing
+        expect(@object_with_jobs).to respond_to :background_job_creation_tracking_callback_for_schedule_long_running_thing
       end
 
       it 'should create a method for the job destroy/reschedule on after_update to call' do
-        @object_with_jobs.should respond_to :reschedule_background_job_for_schedule_long_running_thing
+        expect(@object_with_jobs).to respond_to :reschedule_background_job_for_schedule_long_running_thing
       end
     end
 
@@ -79,25 +80,24 @@ describe 'background job tracking' do
 
       context 'job creation method' do
         it 'should create a delayed_job_tracking record' do
-          @object_with_jobs.stub(:schedule_long_running_thing).and_return(job = Delayed::Job.new)
-          @object_with_jobs.should_receive(:create_delayed_job_tracking_for_method_name_and_job).with(:schedule_long_running_thing, job)
+          allow(@object_with_jobs).to receive(:schedule_long_running_thing).and_return(job = Delayed::Job.new)
+          expect(@object_with_jobs).to receive(:create_delayed_job_tracking_for_method_name_and_job).with(:schedule_long_running_thing, job)
 
           @object_with_jobs.send :background_job_creation_tracking_callback_for_schedule_long_running_thing
         end #job creation method
 
-        context '  calling user defined methods' do
+        context 'calling user defined methods' do
           it 'should track the Delayed::Job returned from the :schedule_long_running_thing method' do
             job = ::Delayed::Job.new
-            @object_with_jobs.should_receive(:schedule_long_running_thing).and_return(job)
-            @object_with_jobs.should_receive(:create_delayed_job_tracking_for_method_name_and_job).with(:schedule_long_running_thing, job)
-
+            expect(@object_with_jobs).to receive(:schedule_long_running_thing).and_return(job)
+            expect(@object_with_jobs).to receive(:create_delayed_job_tracking_for_method_name_and_job).with(:schedule_long_running_thing, job)
 
             @object_with_jobs.save
           end
 
           it 'should not attempt to add a non Delayed::Job instance to the delayed_jobs association' do
-            @object_with_jobs.should_receive(:schedule_long_running_thing).and_return(Object.new)
-            @object_with_jobs.should_not_receive(:create_delayed_job_tracking_for_method_name_and_job)
+            expect(@object_with_jobs).to receive(:schedule_long_running_thing).and_return(Object.new)
+            expect(@object_with_jobs).not_to receive(:create_delayed_job_tracking_for_method_name_and_job)
 
             @object_with_jobs.save!
           end
@@ -106,29 +106,29 @@ describe 'background job tracking' do
 
       context 'for deleting and rescheduling jobs after_update' do
         before :each do
-          @object_with_jobs = ::BackgroundJobTest.new
-          @object_with_jobs.stub(:new_record?).and_return(false)
+          @object_with_jobs = ::BackgroundJobTest.create
+          # allow(@object_with_jobs).to receive(:new_record?).and_return(false)
         end
 
         it 'should call the generated after_update method' do
-          @object_with_jobs.should_receive :reschedule_background_job_for_schedule_long_running_thing
+          expect(@object_with_jobs).to receive :reschedule_background_job_for_schedule_long_running_thing
           @object_with_jobs.save
         end
 
         it 'should destroy jobs created by that method name' do
-          @object_with_jobs.should_receive(:destroy_jobs_created_by_method_name).with(:schedule_long_running_thing)
+          expect(@object_with_jobs).to receive(:destroy_jobs_created_by_method_name).with(:schedule_long_running_thing)
 
           @object_with_jobs.save
         end
 
         it 'should also destroy the trackings created by that method name' do
-          @object_with_jobs.should_receive(:destroy_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing)
+          expect(@object_with_jobs).to receive(:destroy_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing)
 
           @object_with_jobs.save
         end
 
         it 'should re-run the scheduling method' do
-          @object_with_jobs.should_receive(:background_job_creation_tracking_callback_for_schedule_long_running_thing)
+          expect(@object_with_jobs).to receive(:background_job_creation_tracking_callback_for_schedule_long_running_thing)
 
           @object_with_jobs.save
         end
@@ -139,12 +139,12 @@ describe 'background job tracking' do
       before :each do
         @object_with_jobs = ::BackgroundJobTest.new
         @object_with_jobs.id = 66
-        @object_with_jobs.stub(:new_record?).and_return(false)
+        allow(@object_with_jobs).to receive(:new_record?).and_return(false)
       end
 
       context 'run_and_track_job_for' do
         it 'should run the method that schedules and tracks background jobs (background_job_creation_tracking_callback_for_schedule_long_running_thing in our example)' do
-          @object_with_jobs.should_receive(:background_job_creation_tracking_callback_for_schedule_long_running_thing)
+          expect(@object_with_jobs).to receive(:background_job_creation_tracking_callback_for_schedule_long_running_thing)
 
           @object_with_jobs.run_and_track_job_for :schedule_long_running_thing
         end
@@ -152,7 +152,7 @@ describe 'background job tracking' do
 
       context 'run_and_reschedule_job_for' do
         it 'should run the method that reschedules and tracks background jobs (reschedule_background_job_for_schedule_long_running_thing in our example)' do
-          @object_with_jobs.should_receive(:reschedule_background_job_for_schedule_long_running_thing)
+          expect(@object_with_jobs).to receive(:reschedule_background_job_for_schedule_long_running_thing)
 
           @object_with_jobs.run_and_reschedule_job_for :schedule_long_running_thing
         end
@@ -161,9 +161,9 @@ describe 'background job tracking' do
       context 'create_delayed_job_tracking_for_method_name_and_job' do
         it 'should create a delayed_job_tracking for the job with the method name' do
           job = double
-          @object_with_jobs.stub(:delayed_job_trackings).and_return(trackings_association = double)
+          allow(@object_with_jobs).to receive(:delayed_job_trackings).and_return(trackings_association = double)
 
-          trackings_association.should_receive(:create).with({:created_by_method_name => 'schedule_long_running_thing', :delayed_job => job})
+          expect(trackings_association).to receive(:create).with({:created_by_method_name => 'schedule_long_running_thing', :delayed_job => job})
 
           @object_with_jobs.send(:create_delayed_job_tracking_for_method_name_and_job, :schedule_long_running_thing, job)
         end
@@ -171,49 +171,49 @@ describe 'background job tracking' do
 
       context 'destroy_jobs_created_by_method_name' do
         it 'should destroy the jobs if it finds any' do
-          jobs = [ double ]
+          jobs = [ double('delayed_job', '[]' => 1) ]
           method_name = :schedule_ninety_horses
-          @object_with_jobs.should_receive(:get_jobs_created_by_method_name).with(method_name).and_return(jobs)
+          expect(@object_with_jobs).to receive(:get_jobs_created_by_method_name).with(method_name).and_return(jobs)
+          expect(@object_with_jobs.class.background_job_class).to receive(:destroy).with([1])
 
-          @object_with_jobs.class.background_job_class.should_receive(:destroy).with(jobs)
-
-          @object_with_jobs.send :destroy_jobs_created_by_method_name, method_name
+          @object_with_jobs.send(:destroy_jobs_created_by_method_name, method_name)
         end
 
         it 'should not bother to  destroy if it does not find any jobs' do
           jobs = []
           method_name = :schedule_ninety_horses
-          @object_with_jobs.should_receive(:get_jobs_created_by_method_name).with(method_name).and_return(jobs)
+          expect(@object_with_jobs).to receive(:get_jobs_created_by_method_name).with(method_name).and_return(jobs)
 
-          @object_with_jobs.class.background_job_class.should_not_receive(:destroy)
+          expect(@object_with_jobs.class.background_job_class).not_to receive(:destroy)
 
-          @object_with_jobs.send :destroy_jobs_created_by_method_name, method_name
+          @object_with_jobs.send(:destroy_jobs_created_by_method_name, method_name)
         end
       end
 
       context 'get_delayed_job_trackings_created_by_method_name' do
         it 'should find jobs created by that method ' do
           relation = @object_with_jobs.send(:get_delayed_job_trackings_created_by_method_name, :schedule_long_running_thing)
+          
+          cleaned_query = relation.to_sql.gsub(/\"/, "")
 
-          relation.to_sql.should == %{SELECT delayed_job_trackings.* FROM delayed_job_trackings  WHERE delayed_job_trackings.job_owner_id = 66 AND delayed_job_trackings.job_owner_type = 'BackgroundJobTest' AND delayed_job_trackings.created_by_method_name = 'schedule_long_running_thing'}
+          expect(cleaned_query).to eq %{SELECT delayed_job_trackings.* FROM delayed_job_trackings WHERE delayed_job_trackings.job_owner_id = 66 AND delayed_job_trackings.job_owner_type = 'BackgroundJobTest' AND delayed_job_trackings.created_by_method_name = 'schedule_long_running_thing'}
         end
       end
 
       context 'destroy_delayed_job_trackings_created_by_method_name' do
         it 'should destroy those trackings if they exist' do
-          trackings = [  double ]
-          @object_with_jobs.stub(:get_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing).and_return(trackings)
-
-          DelayedJobTracking.should_receive(:destroy).with(trackings)
+          trackings = [ double('trackings', '[]' => 1) ]
+          allow(@object_with_jobs).to receive(:get_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing).and_return(trackings)
+          expect(DelayedJobTracking).to receive(:destroy).with([1])
 
           @object_with_jobs.send(:destroy_delayed_job_trackings_created_by_method_name, :schedule_long_running_thing)
         end
 
         it 'should not bother if empty' do
           trackings = []
-          @object_with_jobs.stub(:get_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing).and_return(trackings)
+          allow(@object_with_jobs).to receive(:get_delayed_job_trackings_created_by_method_name).with(:schedule_long_running_thing).and_return(trackings)
 
-          DelayedJobTracking.should_not_receive(:destroy).with(trackings)
+          expect(DelayedJobTracking).not_to receive(:destroy).with(trackings)
 
           @object_with_jobs.send(:destroy_delayed_job_trackings_created_by_method_name, :schedule_long_running_thing)
         end
@@ -226,16 +226,16 @@ describe 'background job tracking' do
       end
 
       it 'should call the generated callback method after create' do
-        @object_with_jobs.should_receive(:background_job_creation_tracking_callback_for_schedule_long_running_thing)
+        expect(@object_with_jobs).to receive(:background_job_creation_tracking_callback_for_schedule_long_running_thing)
 
         @object_with_jobs.save!
       end
 
       it 'should call the generated callback for after_update' do
-        @object_with_jobs.stub(:new_record?).and_return(false)
+        allow(@object_with_jobs).to receive(:new_record?).and_return(false)
         @object_with_jobs.id = 66
 
-        @object_with_jobs.should_receive(:reschedule_background_job_for_schedule_long_running_thing)
+        expect(@object_with_jobs).to receive(:reschedule_background_job_for_schedule_long_running_thing)
 
         @object_with_jobs.save!
       end
@@ -244,8 +244,7 @@ describe 'background job tracking' do
 
   describe 'Delayed::Backend::ActiveRecord::Job' do
     it 'should have a dependent destroy on trackings' do
-      puts   Delayed::Backend::ActiveRecord::Job.reflections[:delayed_job_tracking]
-      Delayed::Backend::ActiveRecord::Job.reflections[:delayed_job_tracking].options[:dependent].should == :destroy
+      expect(Delayed::Backend::ActiveRecord::Job.reflections["delayed_job_tracking"].options[:dependent]).to eq :destroy
     end
   end
 

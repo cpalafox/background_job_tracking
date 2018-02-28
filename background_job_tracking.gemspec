@@ -2,8 +2,8 @@
 require File.expand_path('../lib/background_job_tracking/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["nat"]
-  gem.email         = ["nat.lownes@gmail.com"]
+  gem.authors       = ["nat", "cesar"]
+  gem.email         = ["nat.lownes@gmail.com", "cpaguila1@gmail.com"]
   gem.description   = %q{ActiveRecord extension to allow tracking / rescheduling Delayed Job jobs on object creation / update.}
   gem.summary       = %q{ActiveRecord extension to allow tracking / rescheduling Delayed Job jobs on object creation / update.}
   gem.homepage      = ""
@@ -15,5 +15,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = BackgroundJobTracking::VERSION
 
-  gem.add_development_dependency "rspec", "~> 2.6"
+  gem.add_development_dependency "rspec", "~> 3.0"
+  gem.add_development_dependency "activerecord", ">= 4.0"
+  gem.add_development_dependency "sqlite3"
 end

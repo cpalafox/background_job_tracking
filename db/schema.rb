@@ -1,6 +1,6 @@
 # example schema - also used by nulldb for tests
 ActiveRecord::Schema.define(:version => 1) do
-  create_table "background_job_test" do |t|
+  create_table "background_job_tests" do |t|
   end
 
   create_table "delayed_job_trackings", :force => true do |t|

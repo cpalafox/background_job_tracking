@@ -16,11 +16,11 @@ module BackgroundJobTracking
         #
         #
         #
-        #background_job_tracking :on => :after_create,
-          #:method_name => :schedule_first_rating_email_and_reminder,
-          #:if  => Proc.new {|e| e.initiative.rating_has_begun },
+        #background_job_tracking on: :after_create,
+          #method_name: :schedule_first_rating_email_and_reminder,
+          #if : Proc.new {|e| e.initiative.rating_has_begun },
           ## destroys all jobs by associated method name and reschedules
-          #:update_if => Proc.new {|o| o.start_date_changed? }
+          #update_if: Proc.new {|o| o.start_date_changed? }
         #
         #
         #
@@ -37,8 +37,8 @@ module BackgroundJobTracking
         opts[:dependent]  ||= :destroy
         @background_job_class = opts[:class_name].constantize
 
-        has_many :delayed_job_trackings, :as => :job_owner
-        has_many :delayed_jobs, :through => :delayed_job_trackings, :class_name => opts[:class_name], :dependent => opts[:dependent]
+        has_many :delayed_job_trackings, as: :job_owner
+        has_many :delayed_jobs, through: :delayed_job_trackings, class_name: opts[:class_name], dependent: opts[:dependent]
       end
 
       def background_job_class
@@ -61,7 +61,7 @@ module BackgroundJobTracking
       end
 
       def add_callback_method_for_job_create_to_callbacks(config)
-        self.send(config.callback_to_use, config.job_creation_method_name, :if => config.options[:if]) 
+        self.send(config.callback_to_use, config.job_creation_method_name, if: config.options[:if]) 
       end
 
       def create_callback_method_for_destroy_and_reschedule_on_update(config)
@@ -77,7 +77,7 @@ module BackgroundJobTracking
       end
 
       def add_callback_method_for_job_destroy_and_reschedule_on_update(config)
-        after_update(config.job_rescheduling_method_name, :if => config.options[:update_if])
+        after_update(config.job_rescheduling_method_name, if: config.options[:update_if])
       end
     end #class methods
 
@@ -96,20 +96,20 @@ module BackgroundJobTracking
     private
 
     def create_delayed_job_tracking_for_method_name_and_job(method_name, job)
-      self.delayed_job_trackings.create(:created_by_method_name => method_name.to_s, :delayed_job => job)
+      self.delayed_job_trackings.create(created_by_method_name: method_name.to_s, delayed_job: job)
     end
 
     def destroy_jobs_created_by_method_name(method_name)
-      jobs = get_jobs_created_by_method_name(method_name)
+      jobs = get_jobs_created_by_method_name(method_name).pluck(:id)
       self.class.background_job_class.destroy(jobs) unless jobs.empty?
     end
 
     def get_delayed_job_trackings_created_by_method_name(method_name)
-      self.delayed_job_trackings.includes(:delayed_job).where(:'delayed_job_trackings.created_by_method_name' => method_name)
+      self.delayed_job_trackings.includes(:delayed_job).where('delayed_job_trackings.created_by_method_name' => method_name)
     end
 
     def destroy_delayed_job_trackings_created_by_method_name(method_name)
-      trackings = get_delayed_job_trackings_created_by_method_name(method_name)
+      trackings = get_delayed_job_trackings_created_by_method_name(method_name).pluck(:id)
       DelayedJobTracking.destroy(trackings) unless trackings.empty?
     end
 

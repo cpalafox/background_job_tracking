@@ -14,8 +14,7 @@ Bundler.require(:default, :development)
 
 require 'active_record'
 require 'background_job_tracking'
-require 'nulldb_rspec'
-require 'nulldb/rails'
 
-include NullDB::RSpec::NullifiedDatabase
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
 
+load './db/schema.rb'
